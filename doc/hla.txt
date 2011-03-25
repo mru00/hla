@@ -1,0 +1,145 @@
+= hla - high level atmel programming
+mru
+2011-03
+
+[abstract]
+== Abstract
+
+hla aims to be a simple high level / domain specific language, aimed at (really) simple atmel development tasks.
+
+
+
+:numbered:
+
+== overview
+
+
+=== targets
+
+controller selection
+
+    targets ATMEGA8
+
+=== setup
+
+the controller is setup via 
+  
+    uses ...
+
+instructions.
+
+example:
+
+    uses ADC
+    uses UART
+
+
+=== io pins
+
+    io PORTA.1 is INPUT named "direction"
+
+=== predicates
+
+
+predicates are named conditions. since all variables are global, it is easy to name such a condition and reuse that anywhere where a condition would be allowed.
+
+
+=== variables
+
+variables only exist globally.
+
+variables must be declared:
+    
+    var name is u8
+
+
+=== instructions
+
+    when condition do ... done
+    set  output|variable value
+    increment variable
+    decrement variable
+
+
+=== top level
+
+on top level, 'processes' exist. these processes run quasi-parallel. each such has a trigger
+
+==== triggers
+
+===== initial
+
+is executed when the device is reset.
+
+===== on - interrupts
+
+    on INT0 do 
+
+    done
+
+===== when - input condition
+
+
+    when direction = high do
+
+    done
+
+=== example program
+
+    targets ATTINY10
+
+    uses UART
+
+    io pulse      is INPUT  on A.1
+    io direction  is OUTPUT on A.2
+
+    var counter  is u8
+
+    condition endpoint_reached is counter = 100
+
+    initially do
+        set counter 0
+        set direction low
+    done
+
+    when pulse = high do
+        increment counter
+    done
+
+    when endpoint_reached do
+        invert direction
+        set counter 0
+    done
+
+    on INT0 do
+        set counter 0
+    done
+
+    always do
+
+    done
+
+== Implementation
+
+flex/bison, translate to c, compile with avr-gcc
+
+interrupt triggers can be translated directly into interrupt handlers.
+
+
+the resulting file would look like this:
+
+    ISR(INT0_vect) {
+    }
+
+    static uint8 counter;
+    
+    int main() {
+        initially()
+        for(;;) {
+            when_pulse_high()
+            when_endpoint_reached()
+            always()
+        }
+    }
+
+
