@@ -1,0 +1,32 @@
+targets ATTINY10
+
+uses UART
+
+io pulse      is INPUT  on A.1
+io direction  is OUTPUT on A.2
+
+var counter  is u8
+
+condition endpoint_reached is counter = 100
+
+initially do
+    set counter 0
+    set direction low
+done
+
+when pulse = high do
+    increment counter
+done
+
+when endpoint_reached = high do
+    invert direction
+    set counter 0
+done
+
+on INT0 do
+    set counter 0
+done
+
+always do
+
+done
