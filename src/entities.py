@@ -1,7 +1,7 @@
 import re
 import logging
 from namespace import *
-
+from mako.template import Template
 
 
 class TE(object):
@@ -16,10 +16,15 @@ class TE(object):
         return True
 
 class NTE(object):
+    template = Template("")
     def __init__(self):
         self.items = []
     def add(self, item):
         self.items.append(item)
+    def get_first(self, clazz):
+        return filter(lambda a: type(a) == clazz,  self.items)[0]
+    def get_items(self, clazz):
+        return filter(lambda a: type(a) == clazz,  self.items)
     def dump(self, level=0):
         d =  "\n"+ " "*level + self.__class__.__name__
         for i in self.items:
@@ -27,7 +32,10 @@ class NTE(object):
         return d
     def onparse(self):
         pass
-
+    def gencode(self):
+        pass
+    def render(self):
+        return self.template.render(nte=self)
 
 class Name(TE): pass
 
@@ -46,11 +54,37 @@ class Type(TE):
 
 
 
-
-
-class Program(NTE): pass
-
 class Target(NTE): pass
+
+
+class Program(NTE):
+        template = Template("""
+#include <avr.h>
+##${nte.get_first(Target).render()}
+
+% for vardecl in nte.get_items(VarDecl):
+${vardecl.render()}
+% endfor
+
+void main() {
+
+% for intially in nte.get_items(Initially):
+${intially.render()}
+% endfor
+
+for(;;) {
+
+% for proc in nte.get_items(ProcDecl):
+${proc.render()}
+% endfor
+
+}
+
+}
+
+""")
+
+
 
 class Decl(NTE): pass
 class Statement(NTE): pass

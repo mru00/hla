@@ -98,6 +98,7 @@ def parse_aux(clazz, level):
                         if subs:
                             dbg(">>parsed NTE [%s/%s]: %s" %(clazz.__name__,p.__name__, subs))
                             possible_object.add(subs)
+                            
                         else:
                             possible_object = None
                             break
