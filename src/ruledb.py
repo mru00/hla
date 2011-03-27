@@ -1,4 +1,7 @@
+import re
+
 from entities import *
+
 
 rules = {}
 
@@ -18,7 +21,8 @@ def add_rule(clazz, arg):
 
     def make_te(item):
         if type(item) == str:
-            n = type("TE_" +item, (TE, object),{ "expression" : item })
+            n = type("TE_" +item, (TE, object),
+                     { "expression" : re.escape(item) })
             return n
         return item
 

@@ -5,52 +5,35 @@ import re
 
 import logging
 
-token = None
-tokenizer = None
-
-token_pat = re.compile(r"[^ \t\n]+")
-
-def tokenize(program):
-    for token_ in token_pat.findall(program):
-        yield token_
-
-
-def next_token(level):
-    global token
-    global tokenizer
-    logging.debug("tokenizer: current token: " + token)
-    try:
-        token = tokenizer()
-        logging.debug("tokenizer: next token: " + token)
-    except StopIteration:
-        logging.debug("tokenizer: consumed all stream")
-        token = None
-
-def parse_aux(clazz, level):
-    global token
-
+def parse_aux(instream, clazz, level):
 
     dbg = lambda m:logging.debug(str(level)+" "*level + m);
 
-    if not token:
+    if len(instream) == 0:
         return None
 
-    dbg("curren token= " + str(token))
+    instream_orig = instream[:]
 
     parsed_object = None
 
     if issubclass(clazz, TE):
         dbg("must parse TE "+clazz.__name__)
-        possible_object = clazz()
-        possible_object.value = token
-        does_match = re.match(possible_object.expression, token)
-        if not does_match:
-            dbg("RE '%s' does not match for token '%s'" % (possible_object.expression, token))
-        if does_match and possible_object.canparse():
-            parsed_object = possible_object
-            next_token(level)
+        m = re.match(clazz.expression, instream)
+        dbg("testing input [truncated]: '%s'..." % instream[:20])
+        if not m:
+            dbg("RE '%s' does not match for input stream '%s'..." % (clazz.expression, instream[:10]))
+        else:
+            token = instream[m.start():m.end()]
+            logging.debug("match at %s" % str(m.span()))
+            possible_object = clazz()
+            possible_object.value = token
+            if possible_object.canparse():
+                parsed_object = possible_object
+                instream = instream[m.end():].strip()
 
     else:
+
+        instream = instream_orig[:]
 
         prod_items = get_productions(clazz)
 
@@ -61,43 +44,41 @@ def parse_aux(clazz, level):
         for r in prod_items:
             dbg("testing production: " + str(r))
 
+            assert type(r) == list, "unexpected production item: " + str(r)
 
-            if type(r) == str:
-                assert False, "only TE's can have single-strings"
-
-            elif type(r) == list:
-                dbg("found list: " + str(r))
-                possible_object = clazz()
-                for p in r:
-                    dbg("  the current production has next: " + str(p))
-                    if type(p) == list:
-                        dbg(" must parse repetition")
-                        assert len(p) == 1
-                        clazz3 = p[0]
-                        while True:
-                            x = parse_aux(clazz3, level+1)
-                            if not x:
-                                dbg("could not parse: %s" % clazz3.__name__)
-                                break
-                            elif x.canparse():
+            dbg("found list: " + str(r))
+            possible_object = clazz()
+            for p in r:
+                dbg("  the current production has next: " + str(p))
+                if type(p) == list:
+                    dbg(" must parse repetition")
+                    assert len(p) == 1
+                    clazz3 = p[0]
+                    while True:
+                        subparse = parse_aux(instream, clazz3, level+1)
+                        if not subparse:
+                            dbg("could not parse: %s" % clazz3.__name__)
+                            break
+                        else:
+                            (instream, x) = subparse
+                            if x.canparse():
                                 possible_object.add(x)
                             else:
                                 break
-                    else:
-                        subs = parse_aux(p,level+1)
-                        if subs and subs.canparse():
+                else:
+                    subparse = parse_aux(instream, p,level+1)
+                    if subparse:
+                        (instream, subs) = subparse
+                        if subs.canparse():
                             dbg(">>parsed NTE [%s/%s]: %s" %(clazz.__name__,p.__name__, subs))
                             if isinstance(subs,clazz):
                                 possible_object = subs
                             else:
                                 possible_object.add(subs)
-                        else:
-                            possible_object = None
-                            break
-                parsed_object = possible_object
-
-            else:
-                assert False, "unexpected production item: " + str(r)
+                    else:
+                        possible_object = None
+                        break
+            parsed_object = possible_object
 
             if parsed_object:
                 break
@@ -108,23 +89,21 @@ def parse_aux(clazz, level):
             " with parse_tree: " + parsed_object.dump())
     else:
         dbg(">>parsing NTE "+clazz.__name__+" failed, retreat")
-        return None
-
+        parsed_object = None
 
     if parsed_object:
         parsed_object.postparse()
-    return parsed_object
+        return (instream, parsed_object)
+
+    return None
 
 
-def parse(f, toplevel):
+def parse(instream, toplevel):
 
-    global token
-    global tokenizer
-    tokenizer = tokenize(f).next
-    token = tokenizer()
-    parse_data = parse_aux(toplevel, 0)
+    (instream, parse_data) = parse_aux(instream, toplevel, 0)
 
-    assert token == None, "parse error: not all stream consumed"
+    if len(instream) != 0:
+        assert False, "parse error: not all stream consumed at: %s..." % instream[:20]
 
     return parse_data
 
