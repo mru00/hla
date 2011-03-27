@@ -1,14 +1,19 @@
 import re
+import logging
 from namespace import *
 
-class TE(object): 
+
+
+class TE(object):
+    expression = re.compile(r"\w+")
     def __init__(self):
         self.value = None
     def dump(self, level=0):
         return "\n" + " "*level + self.__class__.__name__ + " value: " + str(self.value)
     def onparse(self):
         pass
-
+    def canparse(self):
+        return True
 
 class NTE(object):
     def __init__(self):
@@ -24,57 +29,40 @@ class NTE(object):
         pass
 
 
-class Name(TE):
-    expression = re.compile(r"\s+")
-class Port(TE):
-    expression = re.compile(r"[ABCD]\.\d")
-class Value(TE):
-    expression = re.compile(r"\d+")
-class Nl(TE):
-    expression = re.compile(r"\n")
+class Name(TE): pass
 
-class IoDir(TE):
-    expression = re.compile(r"INPUT|OUTPUT")
+class VarRef(TE):
+    def canparse(self):
+        return get_symbol('var', self.value) != None
+
+class Value(TE):
+    expression = re.compile(r"\d+|low|high")
 
 class Op(TE):
-    expression = re.compile(r"INPUT|OUTPUT")
+    expression = re.compile(r"[+-=]")
 
-class Type(TE): pass
+class Type(TE):
+    expression = re.compile(r"u8")
+
+
+
 
 
 class Program(NTE): pass
 
 class Target(NTE): pass
 
-class UseDecl(NTE): pass
+class Decl(NTE): pass
+class Statement(NTE): pass
+class Condition(NTE): pass
 
-class VarDecl(NTE):
+
+class UseDecl(Decl):
+    def onparse(self):
+        load_mod(self.items[1].value)
+
+class VarDecl(Decl):
     def onparse(self):
         add_symbol('var', self.items[1].value, self)
 
-class IoDecl(NTE):
-    def onparse(self):
-        add_symbol('io', self.items[1].value, self)
-
-class ConditionDecl(NTE):
-    def onparse(self):
-        add_symbol('cond', self.items[1].value, self)
-
-
-class Condition(NTE): pass
-class BinCondition(NTE): pass
-class NamedCondition(NTE): pass
-
-
-class Statement(NTE): pass
-class Set(NTE): pass
-class Increment(NTE): pass
-class Initially(NTE): pass
-
-
-class ProcDecl(NTE): pass
-class When(NTE): pass
-class On(NTE): pass
-class Invert(NTE): pass
-class Always(NTE): pass
 

@@ -3,8 +3,15 @@
 from parse import *
 from namespace import *
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
+
 parse_tree = parse(open("test.hla", "rt").read())
 logging.info("parsed: " + parse_tree.dump())
 
 
 dump_namespace()
+dump_ruledb()
+

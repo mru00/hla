@@ -1,6 +1,12 @@
 targets ATTINY10
 
-uses UART
+uses Io
+uses Condition
+uses Proc
+uses Always
+uses Statements
+uses Loops
+uses Lowlevel
 
 io pulse      is INPUT  on A.1
 io direction  is OUTPUT on A.2
@@ -10,23 +16,34 @@ var counter  is u8
 condition endpoint_reached is counter = 100
 
 initially do
-    set counter 0
-    set direction low
+	set counter 0
+	set direction low
+	callc exit
 done
+
 
 when pulse = high do
-    increment counter
+	increment counter
+	while pulse = high do
+		set counter 1
+	done
 done
 
-when endpoint_reached = high do
-    invert direction
-    set counter 0
+when endpoint_reached  do
+	invert direction
+	set counter 0
+done
+
+when counter = 10  do
+	invert direction
+	set counter 0
 done
 
 on INT0 do
-    set counter 0
+	set counter 0
 done
 
-always do
 
+always do
+	invert direction
 done

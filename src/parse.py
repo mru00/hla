@@ -1,52 +1,32 @@
 from entities import *
 from namespace import *
+from ruledb import *
 import re
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
 
-rules = {}
+token = None
+tokenizer = None
 
-
-def add_rule(clazz, arg):
-    global rules
-    if clazz not in rules.keys():
-        rules[clazz] = [ arg ]
-    else:
-        rules[clazz].append(arg)
-
-
-token_pat = re.compile(r"[a-zA-Z0-9_.=]+")
+token_pat = re.compile(r"[^ \t\n]+")
 
 def tokenize(program):
-    for token in token_pat.findall(program):
-        yield token
+    for token_ in token_pat.findall(program):
+        yield token_
 
-tokenizer = tokenize(open("test.hla", "rt").read()).next
-
-get_productions = lambda clazz: rules[clazz]
-
-token = tokenizer()
-
-
-def is_te(clazz):
-    try:
-        return issubclass(clazz, TE)
-    except TypeError:
-        return False
 
 def next_token(level):
     global token
     global tokenizer
-    logging.info("tokenizer: current token: " + token)
+    logging.debug("tokenizer: current token: " + token)
     try:
         token = tokenizer()
-        logging.info("tokenizer: next token: " + token)
+        logging.debug("tokenizer: next token: " + token)
     except StopIteration:
-        logging.info("tokenizer: consumed all stream: ")
+        logging.debug("tokenizer: consumed all stream")
         token = None
 
-def parse(clazz, level=0):
+def parse_aux(clazz, level):
     global token
 
 
@@ -59,11 +39,16 @@ def parse(clazz, level=0):
 
     parsed_object = None
 
-    if is_te(clazz):
+    if issubclass(clazz, TE):
         dbg("must parse TE "+clazz.__name__)
-        parsed_object = clazz()
-        parsed_object.value = token
-        next_token(level)
+        possible_object = clazz()
+        possible_object.value = token
+        does_match = re.match(possible_object.expression, token)
+        if not does_match:
+            dbg("RE does not match for token %s" % token)
+        if does_match and possible_object.canparse():
+            parsed_object = possible_object
+            next_token(level)
 
     else:
 
@@ -102,85 +87,56 @@ def parse(clazz, level=0):
                         assert len(p) == 1
                         clazz3 = p[0]
                         while True:
-                            x = parse(clazz3, level+1)
+                            x = parse_aux(clazz3, level+1)
                             if not x:
-                                dbg("could not parse "+clazz3.__name__)
+                                dbg("could not parse: %s" % clazz3.__name__)
                                 break
                             else:
                                 possible_object.add(x)
                     else:
-                        subs = parse(p,level+1)
-                        dbg(">>parsed NTE[1]: " + str(subs))
-                        possible_object.add(subs)
+                        subs = parse_aux(p,level+1)
+                        if subs:
+                            dbg(">>parsed NTE [%s/%s]: %s" %(clazz.__name__,p.__name__, subs))
+                            possible_object.add(subs)
+                        else:
+                            possible_object = None
+                            break
                 parsed_object = possible_object
-
-            elif issubclass(r,NTE):
-                possible_object = clazz()
-                o = parse(r,level+1)
-
-                if o:
-                    dbg(">>parsed NTE[2]: " + str(o))
-                    possible_object.add(o)
-                    parsed_object = possible_object
-                    break
-                else:
-                    dbg(">>parsing NTE "+r.__name__+" failed, retreat")
 
             else:
                 assert False, "unexpected production item: " + str(r)
+
+            if parsed_object:
+                break
 
     if parsed_object:
 
         dbg("finishing parse of " + clazz.__name__ +
             " with parse_tree: " + parsed_object.dump())
     else:
-        dbg(">>parsing NTE "+r.__name__+" failed, retreat")
+        dbg(">>parsing NTE "+clazz.__name__+" failed, retreat")
 
     if parsed_object:
         parsed_object.onparse()
     return parsed_object
 
-add_rule(IoDir, "INPUT")
-add_rule(IoDir, "OUTPUT")
-add_rule(Op, "=")
-add_rule(Op, "+")
-add_rule(Op, "-")
-add_rule(Type, "u8")
-add_rule(NamedCondition, [Name])
-add_rule(IoDecl, [ "io", Name, "is", IoDir, "on", Port ])
+
+def parse(f):
+
+    global token
+    global tokenizer
+    tokenizer = tokenize(f).next
+    token = tokenizer()
+    parse_data = parse_aux(Program, 0)
+
+    assert token == None, "parse error: not all stream consumed"
+
+    return parse_data
+
+
 add_rule(Target, [ "targets", Name ])
 add_rule(UseDecl, [ "uses", Name ])
 add_rule(VarDecl, [ "var", Name, "is", Type ])
-add_rule(BinCondition, [Name, Op, Value])
-add_rule(ConditionDecl, ["condition", Name, "is", BinCondition])
-add_rule(Condition, NamedCondition)
-add_rule(Condition, BinCondition)
 
-add_rule(Program, [ Target , [UseDecl], [IoDecl], [VarDecl], 
-                    [ConditionDecl], [ProcDecl] ])
-add_rule(Set, [ "set", Name, Value ] )
-add_rule(Increment, [ "increment", Name ])
-add_rule(Invert, [ "invert", Name ])
+add_rule(Program, [ Target , [Decl]])
 
-add_rule(Statement, Set)
-add_rule(Statement, Increment)
-add_rule(Statement, Invert)
-
-add_rule(ProcDecl, When)
-add_rule(ProcDecl, On)
-add_rule(ProcDecl, Always)
-add_rule(ProcDecl, Initially)
-
-
-add_rule(When, [ "when", BinCondition, "do", [Statement], "done" ])
-add_rule(Initially, [ "initially", "do", [Statement], "done" ])
-add_rule(On, [ "on", Name, "do", [Statement], "done" ])
-add_rule(Always, [ "always", "do", [Statement], "done"])
-
-
-parse_tree = parse(Program)
-logging.info("parsed: " + parse_tree.dump())
-assert token == None, "parse error: not all stream consumed"
-
-
-dump_namespace()

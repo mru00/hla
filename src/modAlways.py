@@ -5,8 +5,7 @@ from namespace import *
 from modProc import *
 
 
-class Always(NTE): pass
+class Always(ProcDecl): pass
 
-add_rule(ProcDecl, Always)
 add_rule(Always, [ "always", "do", [Statement], "done"])
 
