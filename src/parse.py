@@ -91,14 +91,18 @@ def parse_aux(clazz, level):
                             if not x:
                                 dbg("could not parse: %s" % clazz3.__name__)
                                 break
-                            else:
+                            elif x.canparse():
                                 possible_object.add(x)
+                            else:
+                                break
                     else:
                         subs = parse_aux(p,level+1)
-                        if subs:
+                        if subs and subs.canparse():
                             dbg(">>parsed NTE [%s/%s]: %s" %(clazz.__name__,p.__name__, subs))
-                            possible_object.add(subs)
-                            
+                            if isinstance(subs,clazz):
+                                possible_object = subs
+                            else:
+                                possible_object.add(subs)
                         else:
                             possible_object = None
                             break
@@ -110,15 +114,17 @@ def parse_aux(clazz, level):
             if parsed_object:
                 break
 
-    if parsed_object:
+    if parsed_object and parsed_object.canparse():
 
         dbg("finishing parse of " + clazz.__name__ +
             " with parse_tree: " + parsed_object.dump())
     else:
         dbg(">>parsing NTE "+clazz.__name__+" failed, retreat")
+        return None
+
 
     if parsed_object:
-        parsed_object.onparse()
+        parsed_object.postparse()
     return parsed_object
 
 

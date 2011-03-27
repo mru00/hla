@@ -8,7 +8,7 @@ def add_symbol(store, symbol, value):
 
     if store not in stores.keys():
         stores[store] = {}
-    assert symbol not in stores[store].keys()
+    assert symbol not in stores[store].keys(), store + "/" + symbol
     stores[store][symbol] = value
 
 def get_symbol(store, symbol):

@@ -4,9 +4,10 @@ from namespace import *
 
 from modIo import *
 
-class NamedCondition(TE):
+class NamedCondition(Condition):
     def canparse(self):
-        return get_symbol('cond', self.value) != None
+        print "HAS %s" % get_symbol('cond', self.items[0].value)
+        return get_symbol('cond', self.items[0].value) != None
 
 class BinCondition(Condition): pass
 class BinConditionVar(BinCondition): pass
@@ -18,6 +19,6 @@ class ConditionDecl(Decl):
 
 add_rule(BinConditionIo, [IoRef, Op, Value])
 add_rule(BinConditionVar, [VarRef, Op, Value])
-add_rule(Condition, NamedCondition)
 add_rule(ConditionDecl, ["condition", Name, "is", BinCondition])
+add_rule(NamedCondition, [Name])
 

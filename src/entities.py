@@ -8,10 +8,15 @@ class TE(object):
     expression = re.compile(r"\w+")
     def __init__(self):
         self.value = None
+        self.isparsed = False
     def dump(self, level=0):
         return "\n" + " "*level + self.__class__.__name__ + " value: " + str(self.value)
     def onparse(self):
         pass
+    def postparse(self):
+        if not self.isparsed:
+            self.onparse()
+            self.isparsed = True
     def canparse(self):
         return True
 
@@ -19,12 +24,17 @@ class NTE(object):
     template = Template("")
     def __init__(self):
         self.items = []
+        self.isparsed = False
     def add(self, item):
         self.items.append(item)
     def get_first(self, clazz):
         return filter(lambda a: type(a) == clazz,  self.items)[0]
     def get_items(self, clazz):
         return filter(lambda a: type(a) == clazz,  self.items)
+    def postparse(self):
+        if not self.isparsed:
+            self.onparse()
+            self.isparsed = True
     def dump(self, level=0):
         d =  "\n"+ " "*level + self.__class__.__name__
         for i in self.items:
@@ -36,6 +46,8 @@ class NTE(object):
         pass
     def render(self):
         return self.template.render(nte=self)
+    def canparse(self):
+        return True
 
 class Name(TE): pass
 
