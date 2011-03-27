@@ -5,7 +5,7 @@ from namespace import *
 
 import logging
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 
 parse_tree = parse(open("test.hla", "rt").read())
