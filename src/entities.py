@@ -1,8 +1,9 @@
 import re
 import logging
 from namespace import *
+from gendb import *
+import gendb
 from mako.template import Template
-
 
 class TE(object):
     expression = re.compile(r"\w+")
@@ -21,16 +22,25 @@ class TE(object):
         return True
 
 class NTE(object):
-    template = Template("")
+    genpos = GEN_HERE
+    template = Template(r"""/*not implemented : ${nte.__class__}*/
+""")
     def __init__(self):
         self.items = []
         self.isparsed = False
     def add(self, item):
         self.items.append(item)
     def get_first(self, clazz):
-        return filter(lambda a: type(a) == clazz,  self.items)[0]
+        return self.get_items(clazz)[0]
     def get_items(self, clazz):
-        return filter(lambda a: type(a) == clazz,  self.items)
+        logging.debug("+searching for %s" % str(clazz))
+        for i in self.items:
+            logging.debug("  could be %s" % i)
+        l = filter(lambda a: isinstance(a,eval(clazz)),  self.items)
+        for i in l:
+            logging.debug("  is %s" % i)
+
+        return l
     def postparse(self):
         if not self.isparsed:
             self.onparse()
@@ -44,8 +54,9 @@ class NTE(object):
         pass
     def gencode(self):
         pass
-    def render(self):
-        return self.template.render(nte=self)
+    def render(self, level=0):
+        logging.debug("rendering: %s" % self.__class__.__name__)
+        return self.template.render(nte=self, gendb=gendb, level=level)
     def canparse(self):
         return True
 
@@ -66,36 +77,46 @@ class Type(TE):
 
 
 
-class Target(NTE): pass
+class Target(NTE):
+    genpos = GEN_INCLUDE
+    
 
 
 class Program(NTE):
-        template = Template("""
-#include <avr.h>
-##${nte.get_first(Target).render()}
 
-% for vardecl in nte.get_items(VarDecl):
-${vardecl.render()}
+    template = Template(r"""
+#include <avr.h>
+
+% for o in nte.getpositems(gendb.GEN_INCLUDE):
+<% assert o != Undefined %>
+${o.render(0)}\
+% endfor
+
+% for o in nte.getpositems(gendb.GEN_STATIC_GLOBAL):
+<% assert o != Undefined %>
+${o.render(0)}\
 % endfor
 
 void main() {
 
-% for intially in nte.get_items(Initially):
-${intially.render()}
+% for o in nte.getpositems(gendb.GEN_INITIALLY_MAIN):
+<% assert o != Undefined %>
+${o.render(1)}
 % endfor
 
-for(;;) {
-
-% for proc in nte.get_items(ProcDecl):
-${proc.render()}
+  for(;;) {
+% for o in nte.getpositems(gendb.GEN_MAIN_LOOP):
+<% assert o != Undefined %>
+${o.render(3)}
 % endfor
-
-}
+  }
 
 }
 
 """)
 
+    def getpositems(self, pos):
+        return filter (lambda a: a.genpos == pos, self.items)
 
 
 class Decl(NTE): pass
@@ -108,7 +129,11 @@ class UseDecl(Decl):
         load_mod(self.items[1].value)
 
 class VarDecl(Decl):
+    template = Template("""
+static ${nte.items[3].value} ${nte.items[1].value};
+""")
+
+    genpos = GEN_STATIC_GLOBAL
     def onparse(self):
         add_symbol('var', self.items[1].value, self)
-
 
