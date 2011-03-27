@@ -128,22 +128,15 @@ def parse_aux(clazz, level):
     return parsed_object
 
 
-def parse(f):
+def parse(f, toplevel):
 
     global token
     global tokenizer
     tokenizer = tokenize(f).next
     token = tokenizer()
-    parse_data = parse_aux(Program, 0)
+    parse_data = parse_aux(toplevel, 0)
 
     assert token == None, "parse error: not all stream consumed"
 
     return parse_data
-
-
-add_rule(Target, [ "targets", Name ])
-add_rule(UseDecl, [ "uses", Name ])
-add_rule(VarDecl, [ "var", Name, "is", Type ])
-
-add_rule(Program, [ Target , [Decl]])
 

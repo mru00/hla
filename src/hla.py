@@ -1,14 +1,16 @@
 #! /usr/bin/env python2.6
 
-from parse import *
-from namespace import *
+from parse import parse
+from ruledb import dump_ruledb
+from namespace import dump_namespace
 
+from modBase import Program
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
 
-parse_tree = parse(open("test.hla", "rt").read())
+parse_tree = parse(open("test.hla", "rt").read(), Program)
 logging.info("parsed: " + parse_tree.dump())
 
 assert type(parse_tree) == Program

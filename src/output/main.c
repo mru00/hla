@@ -2,7 +2,7 @@
 #include <avr.h>
 
 
-/*not implemented : <class 'entities.Target'>*/
+/*not implemented : <class 'modBase.Target'>*/
 
 
 

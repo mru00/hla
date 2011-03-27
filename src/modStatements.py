@@ -3,6 +3,7 @@ from entities import *
 from namespace import *
 from mako.template import Template
 
+from modBase import *
 
 class Set(Statement):
     template = Template(r"""\

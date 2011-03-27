@@ -2,6 +2,8 @@ from ruledb import *
 from entities import *
 from namespace import *
 
+from modBase import *
+
 
 class IoRef(TE):
     def canparse(self):
