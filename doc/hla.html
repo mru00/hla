@@ -560,152 +560,184 @@ footnotes: function () {
 <div class="sectionbody">
 <div class="paragraph"><p>hla aims to be a simple high level / domain specific language, aimed at (really) simple atmel development tasks.</p></div>
 </div>
-<h2 id="_overview">2. overview</h2>
+<h2 id="_overview">2. Overview</h2>
 <div class="sectionbody">
 <h3 id="_targets">2.1. targets</h3><div style="clear:left"></div>
-<div class="paragraph"><p>controller selection</p></div>
-<div class="literalblock">
+<div class="paragraph"><p>Controller selection</p></div>
+<div class="listingblock">
 <div class="content">
 <pre><tt>targets ATMEGA8</tt></pre>
 </div></div>
-<h3 id="_setup">2.2. setup</h3><div style="clear:left"></div>
-<div class="paragraph"><p>the controller is setup via</p></div>
-<div class="literalblock">
+<h3 id="_uses">2.2. uses</h3><div style="clear:left"></div>
+<div class="paragraph"><p>The controller is setup via</p></div>
+<div class="listingblock">
 <div class="content">
 <pre><tt>uses ...</tt></pre>
 </div></div>
 <div class="paragraph"><p>instructions.</p></div>
-<div class="paragraph"><p>example:</p></div>
-<div class="literalblock">
+<div class="paragraph"><p>Example:</p></div>
+<div class="listingblock">
 <div class="content">
 <pre><tt>uses ADC
 uses UART</tt></pre>
 </div></div>
-<h3 id="_io_pins">2.3. io pins</h3><div style="clear:left"></div>
-<div class="literalblock">
+<h3 id="_io_pins">2.3. Io pins</h3><div style="clear:left"></div>
+<div class="listingblock">
 <div class="content">
-<pre><tt>io PORTA.1 is INPUT named "direction"</tt></pre>
+<pre><tt>io pulse      is INPUT  on A.1
+io direction  is OUTPUT on A.2</tt></pre>
 </div></div>
-<h3 id="_predicates">2.4. predicates</h3><div style="clear:left"></div>
-<div class="paragraph"><p>predicates are named conditions. since all variables are global, it is easy to name such a condition and reuse that anywhere where a condition would be allowed.</p></div>
-<h3 id="_variables">2.5. variables</h3><div style="clear:left"></div>
-<div class="paragraph"><p>variables only exist globally.</p></div>
-<div class="paragraph"><p>variables must be declared:</p></div>
-<div class="literalblock">
+<h3 id="_named_conditions">2.4. Named conditions</h3><div style="clear:left"></div>
+<div class="paragraph"><p>Since all variables are global, it is easy to name such a condition
+and reuse that anywhere where a condition would be allowed.</p></div>
+<h3 id="_variables">2.5. Variables</h3><div style="clear:left"></div>
+<div class="paragraph"><p>Variables only exist globally.</p></div>
+<div class="paragraph"><p>Variables must be declared:</p></div>
+<div class="listingblock">
 <div class="content">
 <pre><tt>var name is u8</tt></pre>
 </div></div>
-<h3 id="_instructions">2.6. instructions</h3><div style="clear:left"></div>
-<div class="literalblock">
+<h3 id="_instructions">2.6. Instructions</h3><div style="clear:left"></div>
+<div class="listingblock">
 <div class="content">
 <pre><tt>when condition do ... done
 set  output|variable value
 increment variable
 decrement variable</tt></pre>
 </div></div>
-<h3 id="_top_level">2.7. top level</h3><div style="clear:left"></div>
-<div class="paragraph"><p>on top level, <em>processes</em> exist. these processes run quasi-parallel. each such has a trigger</p></div>
-<h4 id="_triggers">2.7.1. triggers</h4>
-<h5 id="_initial">initial</h5>
+<h3 id="_processes">2.7. Processes</h3><div style="clear:left"></div>
+<div class="paragraph"><p>On top level, <em>processes</em> exist. these processes run quasi-parallel. each such has a trigger</p></div>
+<h4 id="_initially">2.7.1. initially</h4>
 <div class="paragraph"><p>is executed when the device is reset.</p></div>
-<h5 id="_on_interrupts">on - interrupts</h5>
-<div class="literalblock">
-<div class="content">
-<pre><tt>on INT0 do</tt></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><tt>done</tt></pre>
-</div></div>
-<h5 id="_when_input_condition">when - input condition</h5>
-<div class="literalblock">
-<div class="content">
-<pre><tt>when direction = high do</tt></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><tt>done</tt></pre>
-</div></div>
-<h3 id="_example_program">2.8. example program</h3><div style="clear:left"></div>
-<div class="literalblock">
-<div class="content">
-<pre><tt>targets ATTINY10</tt></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><tt>uses UART</tt></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><tt>io pulse      is INPUT  on A.1
-io direction  is OUTPUT on A.2</tt></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><tt>var counter  is u8</tt></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><tt>condition endpoint_reached is counter = 100</tt></pre>
-</div></div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
 <pre><tt>initially do
-    set counter 0
-    set direction low
 done</tt></pre>
 </div></div>
-<div class="literalblock">
-<div class="content">
-<pre><tt>when pulse = high do
-    increment counter
-done</tt></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><tt>when endpoint_reached do
-    invert direction
-    set counter 0
-done</tt></pre>
-</div></div>
-<div class="literalblock">
+<h4 id="_on_interrupts">2.7.2. on - interrupts</h4>
+<div class="listingblock">
 <div class="content">
 <pre><tt>on INT0 do
-    set counter 0
 done</tt></pre>
 </div></div>
-<div class="literalblock">
+<h4 id="_when_input_condition">2.7.3. when - input condition</h4>
+<div class="listingblock">
 <div class="content">
-<pre><tt>always do</tt></pre>
+<pre><tt>when direction = high do
+done</tt></pre>
 </div></div>
-<div class="literalblock">
+<h4 id="_always">2.7.4. always</h4>
+<div class="listingblock">
 <div class="content">
-<pre><tt>done</tt></pre>
+<pre><tt>always do
+done</tt></pre>
 </div></div>
 </div>
-<h2 id="_implementation">3. Implementation</h2>
+<h2 id="_example_program">3. Example program</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>flex/bison, translate to c, compile with avr-gcc</p></div>
-<div class="paragraph"><p>interrupt triggers can be translated directly into interrupt handlers.</p></div>
-<div class="paragraph"><p>the resulting file would look like this:</p></div>
-<div class="literalblock">
+<div class="listingblock">
 <div class="content">
-<pre><tt>ISR(INT0_vect) {
-}</tt></pre>
+<pre><tt>targets ATTINY10
+
+uses Io
+uses Condition
+uses Proc
+uses Always
+uses Statements
+uses Loops
+uses Lowlevel
+
+io pulse      is INPUT  on A.1
+io direction  is OUTPUT on A.2
+
+var counter  is u8
+
+condition endpoint_reached is counter = 100
+
+initially do
+        set counter 0
+        set direction low
+        callc exit
+done
+
+
+when pulse = high do
+        increment counter
+        while pulse = high do
+                set counter 1
+        done
+done
+
+when endpoint_reached  do
+        invert direction
+        set counter 0
+done
+
+when counter = 10  do
+        invert direction
+        set counter 0
+done
+
+on INT0 do
+        set counter 0
+done
+
+
+always do
+        invert direction
+done</tt></pre>
 </div></div>
-<div class="literalblock">
+</div>
+<h2 id="_implementation">4. Implementation</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Parser is implemented in <em>python</em>. C code is generated using <em>mako templates</em>.</p></div>
+<div class="paragraph"><p>The resulting file would look like this:</p></div>
+<div class="listingblock">
 <div class="content">
-<pre><tt>static uint8 counter;</tt></pre>
-</div></div>
-<div class="literalblock">
-<div class="content">
-<pre><tt>int main() {
-    initially()
-    for(;;) {
-        when_pulse_high()
-        when_endpoint_reached()
-        always()
-    }
+<pre><tt>#include &lt;avr.h&gt;
+
+
+/*not implemented : &lt;class 'modBase.Target'&gt;*/
+
+
+
+static u8 counter;
+
+ISR(INT0) {
+    counter = 0;
+}
+
+void main() {
+
+
+        counter = 0;
+      direction = low;
+/*not implemented : &lt;class 'modLowlevel.CallC'&gt;*/
+
+
+  for(;;) {
+
+      if ( pulse == high ) {
+          counter++;
+          while ( pulse == high ) {
+              counter = 1;
+          }
+      }
+
+
+      if ( counter == 100 ) {
+          direction = ! direction;
+          counter = 0;
+      }
+
+
+      if ( counter == 10 ) {
+          direction = ! direction;
+          counter = 0;
+      }
+
+  }
+
 }</tt></pre>
 </div></div>
 </div>
@@ -713,7 +745,7 @@ done</tt></pre>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2011-03-25 21:01:45 CEST
+Last updated 2011-03-27 18:53:46 CEST
 </div>
 </div>
 </body>

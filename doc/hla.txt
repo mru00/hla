@@ -11,135 +11,215 @@ hla aims to be a simple high level / domain specific language, aimed at (really)
 
 :numbered:
 
-== overview
+== Overview
 
 
 === targets
 
-controller selection
+Controller selection
 
-    targets ATMEGA8
+---------------------------------------------
+targets ATMEGA8
+---------------------------------------------
 
-=== setup
+=== uses
 
-the controller is setup via 
-  
-    uses ...
+The controller is setup via 
+
+---------------------------------------------
+uses ...
+---------------------------------------------
 
 instructions.
 
-example:
+Example:
 
-    uses ADC
-    uses UART
-
-
-=== io pins
-
-    io PORTA.1 is INPUT named "direction"
-
-=== predicates
+---------------------------------------------
+uses ADC
+uses UART
+---------------------------------------------
 
 
-predicates are named conditions. since all variables are global, it is easy to name such a condition and reuse that anywhere where a condition would be allowed.
+=== Io pins
+
+---------------------------------------------
+io pulse      is INPUT  on A.1
+io direction  is OUTPUT on A.2
+---------------------------------------------
+
+=== Named conditions
 
 
-=== variables
+Since all variables are global, it is easy to name such a condition
+and reuse that anywhere where a condition would be allowed.
 
-variables only exist globally.
+=== Variables
 
-variables must be declared:
-    
-    var name is u8
+Variables only exist globally.
 
+Variables must be declared:
 
-=== instructions
-
-    when condition do ... done
-    set  output|variable value
-    increment variable
-    decrement variable
+---------------------------------------------
+var name is u8
+---------------------------------------------
 
 
-=== top level
+=== Instructions
 
-on top level, 'processes' exist. these processes run quasi-parallel. each such has a trigger
+---------------------------------------------
+when condition do ... done
+set  output|variable value
+increment variable
+decrement variable
+---------------------------------------------
 
-==== triggers
 
-===== initial
+=== Processes
+
+On top level, 'processes' exist. these processes run quasi-parallel. each such has a trigger
+
+
+==== initially
 
 is executed when the device is reset.
 
-===== on - interrupts
+---------------------------------------------
+initially do
+done
+---------------------------------------------
 
-    on INT0 do 
+==== on - interrupts
 
-    done
+---------------------------------------------
+on INT0 do
+done
+---------------------------------------------
 
-===== when - input condition
+==== when - input condition
+
+---------------------------------------------
+when direction = high do
+done
+---------------------------------------------
+
+==== always
+
+---------------------------------------------
+always do
+done
+---------------------------------------------
+
+== Example program
+
+---------------------------------------------
+
+targets ATTINY10
+
+uses Io
+uses Condition
+uses Proc
+uses Always
+uses Statements
+uses Loops
+uses Lowlevel
+
+io pulse      is INPUT  on A.1
+io direction  is OUTPUT on A.2
+
+var counter  is u8
+
+condition endpoint_reached is counter = 100
+
+initially do
+	set counter 0
+	set direction low
+	callc exit
+done
 
 
-    when direction = high do
+when pulse = high do
+	increment counter
+	while pulse = high do
+		set counter 1
+	done
+done
 
-    done
+when endpoint_reached  do
+	invert direction
+	set counter 0
+done
 
-=== example program
+when counter = 10  do
+	invert direction
+	set counter 0
+done
 
-    targets ATTINY10
+on INT0 do
+	set counter 0
+done
 
-    uses UART
 
-    io pulse      is INPUT  on A.1
-    io direction  is OUTPUT on A.2
+always do
+	invert direction
+done
 
-    var counter  is u8
 
-    condition endpoint_reached is counter = 100
-
-    initially do
-        set counter 0
-        set direction low
-    done
-
-    when pulse = high do
-        increment counter
-    done
-
-    when endpoint_reached do
-        invert direction
-        set counter 0
-    done
-
-    on INT0 do
-        set counter 0
-    done
-
-    always do
-
-    done
+---------------------------------------------
 
 == Implementation
 
-flex/bison, translate to c, compile with avr-gcc
 
-interrupt triggers can be translated directly into interrupt handlers.
-
-
-the resulting file would look like this:
-
-    ISR(INT0_vect) {
-    }
-
-    static uint8 counter;
-    
-    int main() {
-        initially()
-        for(;;) {
-            when_pulse_high()
-            when_endpoint_reached()
-            always()
-        }
-    }
+Parser is implemented in 'python'. C code is generated using 'mako templates'.
 
 
+The resulting file would look like this:
+
+---------------------------------------------
+
+#include <avr.h>
+
+
+/*not implemented : <class 'modBase.Target'>*/
+
+
+
+static u8 counter;
+
+ISR(INT0) {
+    counter = 0;
+}
+
+void main() {
+
+
+        counter = 0;
+      direction = low;
+/*not implemented : <class 'modLowlevel.CallC'>*/
+
+
+  for(;;) {
+
+      if ( pulse == high ) {
+          counter++;
+          while ( pulse == high ) {
+              counter = 1;
+          }
+      }
+
+
+      if ( counter == 100 ) {
+          direction = ! direction;
+          counter = 0;
+      }
+
+
+      if ( counter == 10 ) {
+          direction = ! direction;
+          counter = 0;
+      }
+
+  }
+
+}
+
+---------------------------------------------
