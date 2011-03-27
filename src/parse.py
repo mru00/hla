@@ -45,7 +45,7 @@ def parse_aux(clazz, level):
         possible_object.value = token
         does_match = re.match(possible_object.expression, token)
         if not does_match:
-            dbg("RE does not match for token %s" % token)
+            dbg("RE '%s' does not match for token '%s'" % (possible_object.expression, token))
         if does_match and possible_object.canparse():
             parsed_object = possible_object
             next_token(level)
@@ -70,19 +70,7 @@ def parse_aux(clazz, level):
                 possible_object = clazz()
                 for p in r:
                     dbg("  the current production has next: " + str(p))
-                    if type(p) == str:
-
-                        dbg(" must parse string: " + p +
-                            " with current token: " + token)
-
-                        if p != token:
-                            return None
-                        dbg(">>parsed TE: " + p)
-                        o = TE()
-                        o.value = token
-                        possible_object.add(o)
-                        next_token(level)
-                    elif type(p) == list:
+                    if type(p) == list:
                         dbg(" must parse repetition")
                         assert len(p) == 1
                         clazz3 = p[0]

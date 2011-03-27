@@ -16,9 +16,17 @@ def add_rule(clazz, arg):
         add_rule(sup, clazz2)
 
 
+    def make_te(item):
+        if type(item) == str:
+            n = type("TE_" +item, (TE, object),{ "expression" : item })
+            return n
+        return item
+
 
     if type(arg) != list:
         arg = [ arg ]
+
+    arg = map(make_te, arg)
 
     if clazz not in rules.keys():
         rules[clazz] = [ arg ]
