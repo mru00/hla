@@ -1,8 +1,9 @@
 #! /usr/bin/env python2.6
 
-from parse import parse
-from ruledb import dump_ruledb
-from namespace import dump_namespace
+from dynparser import parse, add_rule, reset_rules, NTE, TE
+from dynparser.namespace import dump_namespace
+from dynparser.ruledb import dump_ruledb
+
 
 from modBase import Program
 import logging

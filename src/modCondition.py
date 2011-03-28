@@ -1,8 +1,3 @@
-from ruledb import *
-from entities import *
-from namespace import *
-from mako.template import Template
-
 from modIo import *
 
 class NamedCondition(Condition):
@@ -33,8 +28,8 @@ class ConditionDecl(Decl):
     def onparse(self):
         add_symbol('cond', self.items[1].value, self)
 
+add_rule(NamedCondition, [Name])
 add_rule(BinConditionIo, [IoRef, Op, Value])
 add_rule(BinConditionVar, [VarRef, Op, Value])
 add_rule(ConditionDecl, ["condition", Name, "is", BinCondition])
-add_rule(NamedCondition, [Name])
 

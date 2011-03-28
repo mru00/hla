@@ -49,3 +49,7 @@ def dump_ruledb():
     for (clazz,args) in rules.items():
         print "    " + clazz.__name__ + " => " + str(args)
     print "===end dump syntax"
+
+def reset():
+    global rules
+    rules = {}

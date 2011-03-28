@@ -169,7 +169,10 @@ done
 == Implementation
 
 
-Parser is implemented in 'python'. C code is generated using 'mako templates'.
+Parser is implemented in 'python'. The parser is maintained in a
+different project, 'dynparser': https://github.com/mru00/dynparser
+
+C code is generated using 'mako templates'.
 
 
 The resulting file would look like this:

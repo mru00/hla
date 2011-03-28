@@ -1,7 +1,17 @@
-from ruledb import *
-from entities import *
-from namespace import *
+from dynparser import parse, add_rule, reset_rules, NTE, TE
+from dynparser.gendb import *
+from dynparser.namespace import get_symbol, add_symbol
+
+import re
+
 from mako.template import Template
+
+
+def load_mod(name):
+    use = __import__('mod'+name, globals(), locals(), [], 0)
+    if not get_symbol('mod', name):
+        add_symbol('mod', name, use)
+
 
 
 class Name(TE): pass
