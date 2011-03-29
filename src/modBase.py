@@ -1,18 +1,25 @@
 from dynparser import parse, add_rule, reset_rules, NTE, TE
 from dynparser.gendb import *
+from dynparser import gendb
 from dynparser.namespace import get_symbol, add_symbol
 
 import re
+import new
 
 from mako.template import Template
 
+def render(self, level=0):
+    return self.template.render(nte=self, gendb=gendb, level=level)
+
+# add needed stuff to the base classes
+NTE.genpos = gendb.GEN_HERE
+NTE.render = new.instancemethod(render,None, NTE)
+NTE.template =  Template(r"/* not implemented: ${nte.__class__} */")
 
 def load_mod(name):
     use = __import__('mod'+name, globals(), locals(), [], 0)
     if not get_symbol('mod', name):
         add_symbol('mod', name, use)
-
-
 
 class Name(TE): pass
 
@@ -90,6 +97,7 @@ static ${nte.items[3].value} ${nte.items[1].value};
     genpos = GEN_STATIC_GLOBAL
     def onparse(self):
         add_symbol('var', self.items[1].value, self)
+
 
 add_rule(Target, [ "targets", Name ])
 add_rule(UseDecl, [ "uses", Name ])
